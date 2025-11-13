@@ -2,11 +2,12 @@ package fr.vehiclerental.maintenance.service;
 
 import fr.vehiclerental.maintenance.entity.Maintenance;
 import fr.vehiclerental.maintenance.entity.ReservationDTO;
-import fr.vehiclerental.maintenance.entity.Unavailability;
+import fr.vehiclerental.maintenance.entity.UnavailabilityDTO;
 import lombok.extern.slf4j.Slf4j;
 import fr.vehiclerental.maintenance.entity.VehicleDTO;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -21,11 +22,23 @@ public class MaintenanceService {
      *
      * @param idVehicle Id du vehicule demandé
      * @return Retourne la liste de vehicule
-    */
+     */
     public List<VehicleDTO> requestVehicle(int idVehicle) {
         RestTemplate restTemplate = new RestTemplate();
         String userRequest = "http://localhost:8082/vehicles/" + idVehicle;
         VehicleDTO[] response = restTemplate.getForObject(userRequest, VehicleDTO[].class);
+        if (response == null) {
+            return new ArrayList<>();
+        } else {
+            return Arrays.asList(response);
+        }
+    }
+
+
+    public List<UnavailabilityDTO> requestUnavaibility(int idSoucis) {
+        RestTemplate restTemplate = new RestTemplate();
+        String userRequest = "http://localhost:8085/unavailability/" + idSoucis;
+        UnavailabilityDTO[] response = restTemplate.getForObject(userRequest, UnavailabilityDTO[].class);
         if (response == null) {
             return new ArrayList<>();
         } else {
@@ -51,8 +64,8 @@ public class MaintenanceService {
     }
 
     public boolean typeVerificationUnavaibility(String typeVehicleUnavailability, String typeVehicleRequest) {
-        if(typeVehicleUnavailability.equals(typeVehicleRequest)){
-            return  true;
+        if (typeVehicleUnavailability.equals(typeVehicleRequest)) {
+            return true;
         }
         return false;
     }
@@ -83,7 +96,7 @@ public class MaintenanceService {
      */
 
 
-    public void editMaintenance (Maintenance findindMaintenance, Maintenance maintenanceBodyRequest, MaintenanceDAO maintenanceDAO) {
+    public void editMaintenance(Maintenance findindMaintenance, Maintenance maintenanceBodyRequest, MaintenanceDAO maintenanceDAO) {
         findindMaintenance.setIdVehicule(maintenanceBodyRequest.getIdVehicule());
         findindMaintenance.setIdUnavailability(maintenanceBodyRequest.getIdUnavailability());
         maintenanceDAO.save(findindMaintenance);

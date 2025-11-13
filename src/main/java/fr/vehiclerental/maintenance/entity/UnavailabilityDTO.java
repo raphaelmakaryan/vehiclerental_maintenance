@@ -3,29 +3,14 @@ package fr.vehiclerental.maintenance.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.stereotype.Repository;
 
-@Data
-@Builder
-@Entity
-@Table(name = "Unavailability")
-public class Unavailability {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Repository
+public class UnavailabilityDTO {
     private Integer id;
-    @Column(name = "type_vehicle")
     private String typeVehicle;
     private String description;
     private int time;
-
-    public Unavailability() {
-    }
-
-    public Unavailability(Integer id, String typeVehicle, String description, int time) {
-        this.id = id;
-        this.typeVehicle = typeVehicle;
-        this.description = description;
-        this.time = time;
-    }
 
     public String getDescription() {
         return description;

@@ -4,8 +4,6 @@ import fr.vehiclerental.maintenance.entity.*;
 import fr.vehiclerental.maintenance.exception.*;
 import fr.vehiclerental.maintenance.service.MaintenanceDAO;
 import fr.vehiclerental.maintenance.service.MaintenanceService;
-import fr.vehiclerental.maintenance.service.UnavaibilityDAO;
-import fr.vehiclerental.maintenance.service.UnavailabilityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 
 import java.util.List;
@@ -25,15 +24,11 @@ import java.util.Map;
 public class WebAppController {
     private final MaintenanceDAO maintenanceDao;
     private final MaintenanceService maintenanceService;
-    private final UnavaibilityDAO unavaibilityDao;
-    private final UnavailabilityService unavailabilityService;
     private final ReservationDTO reservationDTO;
 
-    public WebAppController(MaintenanceDAO maintenanceDao, MaintenanceService maintenanceService, UnavaibilityDAO unavaibilityDao, UnavailabilityService unavailabilityService, ReservationDTO reservationDTO) {
+    public WebAppController(MaintenanceDAO maintenanceDao, MaintenanceService maintenanceService, ReservationDTO reservationDTO) {
         this.maintenanceDao = maintenanceDao;
         this.maintenanceService = maintenanceService;
-        this.unavaibilityDao = unavaibilityDao;
-        this.unavailabilityService = unavailabilityService;
         this.reservationDTO = reservationDTO;
     }
 
@@ -51,7 +46,7 @@ public class WebAppController {
     public List<Maintenance> getMaintenance(@Parameter(description = "Identifiant de l'entretien", required = true) @PathVariable(value = "id") int id) {
         try {
             return maintenanceDao.findById(id);
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new MaintenanceNotFind();
         }
     }
@@ -107,12 +102,12 @@ public class WebAppController {
             List<VehicleDTO> vehicleVerification = maintenanceService.requestVehicle(informations.getId_vehicle());
             if (!vehicleVerification.isEmpty()) {
                 VehicleDTO vehicleDTO = vehicleVerification.getFirst();
-                List<Unavailability> unavailabilityVerification = unavailabilityService.requestUnavaibility(informations.getId_unavailability(), unavaibilityDao);
+                List<UnavailabilityDTO> unavailabilityVerification = maintenanceService.requestUnavaibility(informations.getId_unavailability());
                 if (!unavailabilityVerification.isEmpty()) {
-                    Unavailability unavailability = unavailabilityVerification.getFirst();
+                    UnavailabilityDTO unavailability = unavailabilityVerification.getFirst();
                     List<ReservationDTO> reservationVerification = maintenanceService.requestReservation(informations.getId_vehicle());
                     if (reservationVerification.isEmpty()) {
-                        if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())){
+                        if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
                             Map<String, Object> response = new HashMap<>();
                             Maintenance maintenance = new Maintenance();
                             maintenance.setIdVehicule(vehicleDTO.getId());
@@ -121,31 +116,29 @@ public class WebAppController {
                             response.put("success", true);
                             response.put("message", "Votre entretien a été ajouté !");
                             return ResponseEntity.ok(response);
-                        } else{
+                        } else {
                             throw new VehicleType();
                         }
-                    } else{
+                    } else {
                         throw new VehicleAlreadyReserved();
                     }
                 } else {
-                   throw new UnavailabilityNotFind();
+                    throw new UnavailabilityNotFind();
                 }
-
             } else {
-               throw new VehicleNotFind();
+                throw new VehicleNotFind();
             }
         } catch (Exception e) {
-         throw new MaintenanceNotFind();
+            throw new MaintenanceNotFind();
         }
     }
-
 
 
     @Operation(summary = "Mettre à jour une maintenance dans la base de données", description = "Requête pour mettre a jour une maintenance dans la base de données ")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été modifié !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Maintenance not found with ID : 1\",\n" + "  \"status\": 404\n" + "}")
     }))})
     @PutMapping("/maintenance/{id}")
-    public ResponseEntity<Map<String, Object>> editMaintenance (@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance, @Validated @RequestBody Maintenance maintenanceRequest) {
+    public ResponseEntity<Map<String, Object>> editMaintenance(@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance, @Validated @RequestBody Maintenance maintenanceRequest) {
         try {
             List<Maintenance> maintenance = maintenanceDao.findById(idMaintenance);
             if (maintenance == null || maintenance.isEmpty()) {
