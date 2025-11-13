@@ -1,0 +1,186 @@
+package fr.vehiclerental.maintenance.controller;
+
+import fr.vehiclerental.maintenance.entity.*;
+import fr.vehiclerental.maintenance.exception.*;
+import fr.vehiclerental.maintenance.service.MaintenanceDAO;
+import fr.vehiclerental.maintenance.service.MaintenanceService;
+import fr.vehiclerental.maintenance.service.UnavaibilityDAO;
+import fr.vehiclerental.maintenance.service.UnavailabilityService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+public class WebAppController {
+    private final MaintenanceDAO maintenanceDao;
+    private final MaintenanceService maintenanceService;
+    private final UnavaibilityDAO unavaibilityDao;
+    private final UnavailabilityService unavailabilityService;
+    private final ReservationDTO reservationDTO;
+
+    public WebAppController(MaintenanceDAO maintenanceDao, MaintenanceService maintenanceService, UnavaibilityDAO unavaibilityDao, UnavailabilityService unavailabilityService, ReservationDTO reservationDTO) {
+        this.maintenanceDao = maintenanceDao;
+        this.maintenanceService = maintenanceService;
+        this.unavaibilityDao = unavaibilityDao;
+        this.unavailabilityService = unavailabilityService;
+        this.reservationDTO = reservationDTO;
+    }
+
+    @Operation(summary = "Voir toute les entretiens de la base de données ", description = "Requête pour la récupération de toute les entretiens de la base de données ")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Maintenance.class)))})
+    @GetMapping("/maintenance")
+    public List<Maintenance> maintenance() {
+        return maintenanceDao.findAll();
+    }
+
+
+    @Operation(summary = "Voir un entretien spécifique de la base de données", description = "Requête pour la récupération d'un entretien de la base de données")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Maintenance.class))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MaintenanceNotFind.class)))})
+    @RequestMapping(path = "/maintenance/{id}", method = RequestMethod.GET)
+    public List<Maintenance> getMaintenance(@Parameter(description = "Identifiant de l'entretien", required = true) @PathVariable(value = "id") int id) {
+        try {
+            return maintenanceDao.findById(id);
+        }catch (Exception e) {
+            throw new MaintenanceNotFind();
+        }
+    }
+
+/*
+    @Operation(summary = "Crée un nouvel entretien dans la base de données", description = "Requête pour crée/ajouter un entretien dans la base de données")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReservationAdd.class))), @ApiResponse(responseCode = "405", description = "Erreur métier",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = {
+                            @ExampleObject(
+                                    name = "Client introuvable",
+                                    value = """
+                                            {
+                                              "timestamp": "2025-11-06T15:00:00",
+                                              "status": 404,
+                                              "error": "Client introuvable",
+                                              "message": "Client not found with ID : 1"
+                                            }
+                                            """
+                            ),
+                            @ExampleObject(
+                                    name = "Client déjà réservé",
+                                    value = """
+                                            {
+                                              "timestamp": "2025-11-06T15:00:00",
+                                              "status": 404,
+                                              "error": "Client déjà réservé",
+                                              "message": "Ce client dispose déjà d'une réservation en cours"
+                                            }
+                                            """
+                            ),
+                            @ExampleObject(
+                                    name = "Véhicule déjà réservé",
+                                    value = """
+                                            {
+                                              "timestamp": "2025-11-06T15:00:00",
+                                              "status": 404,
+                                              "error": "Véhicule déjà réservé",
+                                              "message": "Le véhicule 12 est déjà réservé pour cette période"
+                                            }
+                                            """
+                            )
+                    }
+            )
+    )})
+
+ */
+
+    @RequestMapping(value = "/maintenances", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> addMaintenance(@Validated @RequestBody RequiredMaintenance informations) {
+        try {
+            List<VehicleDTO> vehicleVerification = maintenanceService.requestVehicle(informations.getId_vehicle());
+            if (!vehicleVerification.isEmpty()) {
+                VehicleDTO vehicleDTO = vehicleVerification.getFirst();
+                List<Unavailability> unavailabilityVerification = unavailabilityService.requestUnavaibility(informations.getId_unavailability(), unavaibilityDao);
+                if (!unavailabilityVerification.isEmpty()) {
+                    Unavailability unavailability = unavailabilityVerification.getFirst();
+                    List<ReservationDTO> reservationVerification = maintenanceService.requestReservation(informations.getId_vehicle());
+                    if (reservationVerification.isEmpty()) {
+                        if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())){
+                            Map<String, Object> response = new HashMap<>();
+                            Maintenance maintenance = new Maintenance();
+                            maintenance.setIdVehicule(vehicleDTO.getId());
+                            maintenance.setIdUnavailability(unavailability.getId());
+                            maintenanceDao.save(maintenance);
+                            response.put("success", true);
+                            response.put("message", "Votre entretien a été ajouté !");
+                            return ResponseEntity.ok(response);
+                        } else{
+                            throw new VehicleType();
+                        }
+                    } else{
+                        throw new VehicleAlreadyReserved();
+                    }
+                } else {
+                   throw new UnavailabilityNotFind();
+                }
+
+            } else {
+               throw new VehicleNotFind();
+            }
+        } catch (Exception e) {
+         throw new MaintenanceNotFind();
+        }
+    }
+
+
+    /*
+    @Operation(summary = "Mettre à jour une reservation dans la base de données", description = "Requête pour mettre a jour une reservation dans la base de données ")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été modifié !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Reservation not found with ID : 1\",\n" + "  \"status\": 404\n" + "}")
+
+    }))})
+    @PutMapping("/reservations/{id}")
+    public ResponseEntity<Map<String, Object>> editReservations(@Parameter(description = "Identifiant de la reservation", required = true) @PathVariable(value = "id") int idUSer, @Validated @RequestBody Reservations reservationsRequest) {
+        try {
+            List<Reservations> reservations = reservationsDao.findById(idUSer);
+            if (reservations == null || reservations.isEmpty()) {
+                throw new ReservationNotFindException(idUSer);
+            } else {
+                Map<String, Object> response = new HashMap<>();
+                reservationsService.editReservation(reservations.getFirst(), reservationsRequest, reservationsDao);
+                response.put("success", true);
+                response.put("message", "Votre reservation a été modifié !");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+
+    @Operation(summary = "Supprimer une reservation de la base de données", description = "Requête pour supprimer une reservations de la base de données")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été supprimé !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Reservation not found with ID : 1 \",\n" + "  \"status\": 404\n" + "}")
+
+    }))})
+    @DeleteMapping("/reservations/{id}")
+    public ResponseEntity<Map<String, Object>> deleteReservations(@Parameter(description = "Identifiant de la reservation", required = true) @PathVariable(value = "id") int idUSer) {
+        List<Reservations> reservations = reservationsDao.findById(idUSer);
+        if (reservations == null || reservations.isEmpty()) {
+            throw new ReservationNotFindException(idUSer);
+        } else {
+            reservationsDao.delete(reservations.getFirst());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Votre reservations a été supprimé !");
+            return ResponseEntity.ok(response);
+        }
+    }
+
+     */
+}
+
