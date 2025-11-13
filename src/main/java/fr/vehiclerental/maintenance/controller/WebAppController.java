@@ -96,7 +96,7 @@ public class WebAppController {
 
  */
 
-    @RequestMapping(value = "/maintenances", method = RequestMethod.POST)
+    @RequestMapping(value = "/maintenance", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> addMaintenance(@Validated @RequestBody RequiredMaintenance informations) {
         try {
             List<VehicleDTO> vehicleVerification = maintenanceService.requestVehicle(informations.getId_vehicle());
@@ -158,7 +158,7 @@ public class WebAppController {
     @Operation(summary = "Supprimer une maintenance de la base de données", description = "Requête pour supprimer une maintenance de la base de données")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été supprimé !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Reservation not found with ID : 1 \",\n" + "  \"status\": 404\n" + "}")
     }))})
-    @DeleteMapping("/reservations/{id}")
+    @DeleteMapping("/maintenance/{id}")
     public ResponseEntity<Map<String, Object>> deleteMaintenance(@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance) {
         List<Maintenance> maintenances = maintenanceDao.findById(idMaintenance);
         if (maintenances == null || maintenances.isEmpty()) {
