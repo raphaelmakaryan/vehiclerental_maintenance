@@ -10,6 +10,8 @@ import java.util.List;
 public interface MaintenanceDAO extends JpaRepository<Maintenance, Integer> {
     List<Maintenance> findById(int id);
 
+    List<Maintenance> findByIdVehicule(int idVehicule);
+
     List<Maintenance> findAll();
 
     void delete(Maintenance maintenance);

@@ -169,5 +169,18 @@ public class WebAppController {
             return ResponseEntity.ok(response);
         }
     }
+
+    /*
+    @Operation(summary = "Voir un entretien spécifique de la base de données", description = "Requête pour la récupération d'un entretien de la base de données")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Maintenance.class))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MaintenanceNotFind.class)))})
+     */
+    @RequestMapping(path = "/maintenance/vehicle/{id}", method = RequestMethod.GET)
+    public List<Maintenance> getMaintenanceVehicleId(@Parameter(description = "Identifiant du vehicule", required = true) @PathVariable(value = "id") int idVehicle) {
+        try {
+            return maintenanceDao.findByIdVehicule(idVehicle);
+        } catch (Exception e) {
+            throw new MaintenanceNotFind();
+        }
+    }
 }
 
