@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -139,22 +140,21 @@ public class WebAppController {
     }
 
 
-    /*
-    @Operation(summary = "Mettre à jour une reservation dans la base de données", description = "Requête pour mettre a jour une reservation dans la base de données ")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été modifié !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Reservation not found with ID : 1\",\n" + "  \"status\": 404\n" + "}")
 
+    @Operation(summary = "Mettre à jour une maintenance dans la base de données", description = "Requête pour mettre a jour une maintenance dans la base de données ")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été modifié !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Maintenance not found with ID : 1\",\n" + "  \"status\": 404\n" + "}")
     }))})
-    @PutMapping("/reservations/{id}")
-    public ResponseEntity<Map<String, Object>> editReservations(@Parameter(description = "Identifiant de la reservation", required = true) @PathVariable(value = "id") int idUSer, @Validated @RequestBody Reservations reservationsRequest) {
+    @PutMapping("/maintenance/{id}")
+    public ResponseEntity<Map<String, Object>> editMaintenance (@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance, @Validated @RequestBody Maintenance maintenanceRequest) {
         try {
-            List<Reservations> reservations = reservationsDao.findById(idUSer);
-            if (reservations == null || reservations.isEmpty()) {
-                throw new ReservationNotFindException(idUSer);
+            List<Maintenance> maintenance = maintenanceDao.findById(idMaintenance);
+            if (maintenance == null || maintenance.isEmpty()) {
+                throw new MaintenanceNotFind();
             } else {
                 Map<String, Object> response = new HashMap<>();
-                reservationsService.editReservation(reservations.getFirst(), reservationsRequest, reservationsDao);
+                maintenanceService.editMaintenance(maintenance.getFirst(), maintenanceRequest, maintenanceDao);
                 response.put("success", true);
-                response.put("message", "Votre reservation a été modifié !");
+                response.put("message", "Votre maintenance a été modifié !");
                 return ResponseEntity.ok(response);
             }
         } catch (Exception e) {
@@ -162,25 +162,21 @@ public class WebAppController {
         }
     }
 
-
-    @Operation(summary = "Supprimer une reservation de la base de données", description = "Requête pour supprimer une reservations de la base de données")
+    @Operation(summary = "Supprimer une maintenance de la base de données", description = "Requête pour supprimer une maintenance de la base de données")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\n" + "    \"success\": true,\n" + "    \"message\": \"Votre reservation a été supprimé !\"\n" + "}"))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Reservation not found with ID : 1 \",\n" + "  \"status\": 404\n" + "}")
-
     }))})
     @DeleteMapping("/reservations/{id}")
-    public ResponseEntity<Map<String, Object>> deleteReservations(@Parameter(description = "Identifiant de la reservation", required = true) @PathVariable(value = "id") int idUSer) {
-        List<Reservations> reservations = reservationsDao.findById(idUSer);
-        if (reservations == null || reservations.isEmpty()) {
-            throw new ReservationNotFindException(idUSer);
+    public ResponseEntity<Map<String, Object>> deleteMaintenance(@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance) {
+        List<Maintenance> maintenances = maintenanceDao.findById(idMaintenance);
+        if (maintenances == null || maintenances.isEmpty()) {
+            throw new MaintenanceNotFind();
         } else {
-            reservationsDao.delete(reservations.getFirst());
+            maintenanceDao.delete(maintenances.getFirst());
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Votre reservations a été supprimé !");
+            response.put("message", "Votre maintenance a été supprimé !");
             return ResponseEntity.ok(response);
         }
     }
-
-     */
 }
 
