@@ -3,6 +3,9 @@ package fr.vehiclerental.maintenance.service;
 import fr.vehiclerental.maintenance.entity.Maintenance;
 import fr.vehiclerental.maintenance.entity.ReservationDTO;
 import fr.vehiclerental.maintenance.entity.UnavailabilityDTO;
+import fr.vehiclerental.maintenance.exception.MaintenanceNotFind;
+import fr.vehiclerental.maintenance.exception.UnavailabilityNotFind;
+import fr.vehiclerental.maintenance.exception.VehicleNotFind;
 import lombok.extern.slf4j.Slf4j;
 import fr.vehiclerental.maintenance.entity.VehicleDTO;
 import org.springframework.web.client.RestTemplate;
@@ -71,35 +74,33 @@ public class MaintenanceService {
     }
 
 
-
-
-/*
-    /**
-     * Methode pour crée une reservation
-     *
-     * @param reservationsDao Class DAO pour faire les requetes a la bdd
-     * @param client          Information du client
-     * @param vehicle         Information du vehicule
-     * @param informations    Information donnée depuis la requete
-     * @param priceFinal      Prix final
-
-    public void createReservation(ReservationsDao reservationsDao, ClientDTO client, VehicleDTO vehicle, Unavailability informations, int priceFinal) {
-        Reservations newReservation = new Reservations();
-        newReservation.setIdClient(client.getId());
-        newReservation.setIdVehicule(vehicle.getId());
-        newReservation.setStartReservation(informations.getStartReservation());
-        newReservation.setEndReservation(informations.getEndReservation());
-        newReservation.setEstimatedKm(informations.getEstimatedKm());
-        newReservation.setPriceReservation(priceFinal);
-        reservationsDao.save(newReservation);
-    }
-     */
-
-
     public void editMaintenance(Maintenance findindMaintenance, Maintenance maintenanceBodyRequest, MaintenanceDAO maintenanceDAO) {
         findindMaintenance.setIdVehicule(maintenanceBodyRequest.getIdVehicule());
         findindMaintenance.setIdUnavailability(maintenanceBodyRequest.getIdUnavailability());
         maintenanceDAO.save(findindMaintenance);
     }
 
+    public List<Maintenance> getMaintenanceOrThrow(int id, MaintenanceDAO maintenanceDAO) {
+        List<Maintenance> maintenance = maintenanceDAO.findById(id);
+        if (maintenance == null || maintenance.isEmpty()) {
+            throw new MaintenanceNotFind();
+        }
+        return maintenance;
+    }
+
+    public VehicleDTO getVehicleOrThrow(int vehicleId) {
+        List<VehicleDTO> list = this.requestVehicle(vehicleId);
+        if (list == null || list.isEmpty()) {
+            throw new VehicleNotFind();
+        }
+        return list.getFirst();
+    }
+
+    public UnavailabilityDTO getUnavailabilityOrThrow(int unavailabilityId) {
+        List<UnavailabilityDTO> list = this.requestUnavaibility(unavailabilityId);
+        if (list == null || list.isEmpty()) {
+            throw new UnavailabilityNotFind();
+        }
+        return list.getFirst();
+    }
 }
