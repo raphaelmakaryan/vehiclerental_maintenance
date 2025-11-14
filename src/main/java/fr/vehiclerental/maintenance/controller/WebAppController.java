@@ -24,12 +24,16 @@ import java.util.Map;
 public class WebAppController {
     private final MaintenanceDAO maintenanceDao;
     private final MaintenanceService maintenanceService;
-    private final ReservationDTO reservationDTO;
 
-    public WebAppController(MaintenanceDAO maintenanceDao, MaintenanceService maintenanceService, ReservationDTO reservationDTO) {
+    public WebAppController(MaintenanceDAO maintenanceDao, MaintenanceService maintenanceService) {
         this.maintenanceDao = maintenanceDao;
         this.maintenanceService = maintenanceService;
-        this.reservationDTO = reservationDTO;
+    }
+
+    @Operation(summary = "Home page")
+    @RequestMapping("/")
+    public String index() {
+        return "Welcome to the Vehicle Rental Company Maintenance API!";
     }
 
     @Operation(summary = "Voir toute les entretiens de la base de données ", description = "Requête pour la récupération de toute les entretiens de la base de données ")
@@ -98,33 +102,20 @@ public class WebAppController {
 
     @RequestMapping(value = "/maintenance", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> addMaintenance(@Validated @RequestBody RequiredMaintenance informations) {
-        List<VehicleDTO> vehicleVerification = maintenanceService.requestVehicle(informations.getId_vehicle());
-        if (!vehicleVerification.isEmpty()) {
-            VehicleDTO vehicleDTO = vehicleVerification.getFirst();
-            List<UnavailabilityDTO> unavailabilityVerification = maintenanceService.requestUnavaibility(informations.getId_unavailability());
-            if (!unavailabilityVerification.isEmpty()) {
-                UnavailabilityDTO unavailability = unavailabilityVerification.getFirst();
-                if (maintenanceService.requestReservation(informations.getId_vehicle())) {
-                    if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
-                        Map<String, Object> response = new HashMap<>();
-                        Maintenance maintenance = new Maintenance();
-                        maintenance.setIdVehicule(vehicleDTO.getId());
-                        maintenance.setIdUnavailability(unavailability.getId());
-                        maintenanceDao.save(maintenance);
-                        response.put("success", true);
-                        response.put("message", "Votre entretien a été ajouté !");
-                        return ResponseEntity.ok(response);
-                    } else {
-                        throw new VehicleType();
-                    }
-                } else {
-                    throw new VehicleAlreadyReserved();
-                }
-            } else {
-                throw new UnavailabilityNotFind();
-            }
+        VehicleDTO vehicleDTO = maintenanceService.vehicleVerification(informations.getId_vehicle());
+        UnavailabilityDTO unavailability = maintenanceService.unavailabilityVerification(informations.getId_unavailability());
+        maintenanceService.requestReservation(informations.getId_vehicle());
+        if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
+            Map<String, Object> response = new HashMap<>();
+            Maintenance maintenance = new Maintenance();
+            maintenance.setIdVehicule(vehicleDTO.getId());
+            maintenance.setIdUnavailability(unavailability.getId());
+            maintenanceDao.save(maintenance);
+            response.put("success", true);
+            response.put("message", "Votre entretien a été ajouté !");
+            return ResponseEntity.ok(response);
         } else {
-            throw new VehicleNotFind();
+            throw new VehicleType();
         }
     }
 
@@ -137,10 +128,9 @@ public class WebAppController {
             @Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance,
             @Validated @RequestBody Maintenance maintenanceRequest) {
         try {
-            System.out.println(maintenanceRequest.toString());
-            List<Maintenance> maintenance = maintenanceService.getMaintenanceOrThrow(idMaintenance, maintenanceDao);
-            VehicleDTO vehicle = maintenanceService.getVehicleOrThrow(maintenanceRequest.getIdVehicule());
-            UnavailabilityDTO unavailability = maintenanceService.getUnavailabilityOrThrow(maintenanceRequest.getIdUnavailability());
+            List<Maintenance> maintenance = maintenanceService.maintenanceVerification(idMaintenance, maintenanceDao);
+            VehicleDTO vehicle = maintenanceService.vehicleVerification(maintenanceRequest.getIdVehicule());
+            UnavailabilityDTO unavailability = maintenanceService.unavailabilityVerification(maintenanceRequest.getIdUnavailability());
             if (!maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicle.getType())) {
                 throw new VehicleType();
             } else {
