@@ -19,9 +19,10 @@ public class MaintenanceService {
     MaintenanceDAO maintenanceDAO;
 
     /**
+     * Méthode pour récuperer une maintenance précise
      *
-     * @param id
-     * @return
+     * @param id id de la maintenance
+     * @return réponse
      */
     public List<Maintenance> oneMaintenance(int id) {
         try {
@@ -153,9 +154,10 @@ public class MaintenanceService {
     }
 
     /**
+     * Méthode de vérifiction pour l'ajout d'une maintenance
      *
-     * @param informations
-     * @return
+     * @param informations information de la requete
+     * @return réponse
      */
     public Map<String, Object> addMaintenanceService(RequiredMaintenance informations) {
         VehicleDTO vehicleDTO = this.vehicleVerification(informations.getId_vehicle());
@@ -176,10 +178,11 @@ public class MaintenanceService {
     }
 
     /**
+     * Méthode de vérifiction pour la modifiation d'une maintenance
      *
-     * @param idMaintenance
-     * @param maintenanceRequest
-     * @return
+     * @param idMaintenance      id de la maintenance
+     * @param maintenanceRequest information de la requete
+     * @return réponse
      */
     public Map<String, Object> editMaintenanceService(int idMaintenance, Maintenance maintenanceRequest) {
         try {
@@ -200,6 +203,12 @@ public class MaintenanceService {
         }
     }
 
+    /**
+     * Méthode de vérifiction pour la suppresion d'une maintenance
+     *
+     * @param idMaintenance id de la maintenance
+     * @return réponse
+     */
     public Map<String, Object> deleteMaintenanceService(int idMaintenance) {
         List<Maintenance> maintenances = maintenanceDAO.findById(idMaintenance);
         if (maintenances == null || maintenances.isEmpty()) {
@@ -213,6 +222,11 @@ public class MaintenanceService {
         }
     }
 
+    /***
+     * Méthode pour récuperer une maintenance via l'id d'un vehicule
+     * @param idVehicle id du vehicule
+     * @return réponse
+     */
     public List<Maintenance> maintenancesWithVehicle(int idVehicle) {
         try {
             return maintenanceDAO.findByIdVehicle(idVehicle);
