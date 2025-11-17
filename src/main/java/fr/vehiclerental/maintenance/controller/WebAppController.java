@@ -186,7 +186,7 @@ public class WebAppController {
     @RequestMapping(path = "/maintenance/vehicle/{id}", method = RequestMethod.GET)
     public List<Maintenance> getMaintenanceVehicleId(@Parameter(description = "Identifiant du vehicule", required = true) @PathVariable(value = "id") int idVehicle) {
         try {
-            return maintenanceDao.findByIdVehicule(idVehicle);
+            return maintenanceDao.findByIdVehicle(idVehicle);
         } catch (Exception e) {
             throw new MaintenanceNotFind();
         }
