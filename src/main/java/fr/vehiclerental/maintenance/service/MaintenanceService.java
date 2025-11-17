@@ -4,7 +4,6 @@ import fr.vehiclerental.maintenance.entity.*;
 import fr.vehiclerental.maintenance.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +16,16 @@ public class MaintenanceService {
 
     @Autowired
     MaintenanceDAO maintenanceDAO;
+
+
+    /**
+     * Méthode pour récuperer toute les maintenances
+     *
+     * @return Réponse
+     */
+    public List<Maintenance> allMaintenance() {
+        return maintenanceDAO.findAll();
+    }
 
     /**
      * Méthode pour récuperer une maintenance précise

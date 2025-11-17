@@ -2,7 +2,6 @@ package fr.vehiclerental.maintenance.controller;
 
 import fr.vehiclerental.maintenance.entity.*;
 import fr.vehiclerental.maintenance.exception.*;
-import fr.vehiclerental.maintenance.service.MaintenanceDAO;
 import fr.vehiclerental.maintenance.service.MaintenanceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,18 +15,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-
 import java.util.List;
 import java.util.Map;
 
 @RestController
 public class WebAppController {
-    private final MaintenanceDAO maintenanceDao;
     private final MaintenanceService maintenanceService;
 
-    public WebAppController(MaintenanceDAO maintenanceDao, MaintenanceService maintenanceService) {
-        this.maintenanceDao = maintenanceDao;
+    public WebAppController(MaintenanceService maintenanceService) {
         this.maintenanceService = maintenanceService;
     }
 
@@ -41,7 +36,7 @@ public class WebAppController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Maintenance.class)))})
     @GetMapping("/maintenance")
     public List<Maintenance> maintenance() {
-        return maintenanceDao.findAll();
+        return maintenanceService.allMaintenance();
     }
 
 
