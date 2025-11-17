@@ -3,17 +3,33 @@ package fr.vehiclerental.maintenance.service;
 import fr.vehiclerental.maintenance.entity.*;
 import fr.vehiclerental.maintenance.exception.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Arrays;
-import java.util.ArrayList;
+import java.util.*;
 
 @Slf4j
 @Service
 
 public class MaintenanceService {
+
+    @Autowired
+    MaintenanceDAO maintenanceDAO;
+
+    /**
+     *
+     * @param id
+     * @return
+     */
+    public List<Maintenance> oneMaintenance(int id) {
+        try {
+            return maintenanceDAO.findById(id);
+        } catch (Exception e) {
+            throw new MaintenanceNotFind();
+        }
+    }
 
     /**
      * Methode qui appeller l'api Vehicle
@@ -87,9 +103,8 @@ public class MaintenanceService {
      *
      * @param findindMaintenance     Maintenance trouvé via son id
      * @param maintenanceBodyRequest Information de la maintenance via a requete
-     * @param maintenanceDAO         DAO de maintenance
      */
-    public void editMaintenance(Maintenance findindMaintenance, Maintenance maintenanceBodyRequest, MaintenanceDAO maintenanceDAO) {
+    public void editMaintenance(Maintenance findindMaintenance, Maintenance maintenanceBodyRequest) {
         findindMaintenance.setidVehicle(maintenanceBodyRequest.getidVehicle());
         findindMaintenance.setIdUnavailability(maintenanceBodyRequest.getIdUnavailability());
         maintenanceDAO.save(findindMaintenance);
@@ -98,11 +113,10 @@ public class MaintenanceService {
     /**
      * Méthode de verification pour récuperer la maintenance
      *
-     * @param id             Id de la maintenance
-     * @param maintenanceDAO DAO maintenance
+     * @param id Id de la maintenance
      * @return Liste de maintenance ou erreur
      */
-    public List<Maintenance> maintenanceVerification(int id, MaintenanceDAO maintenanceDAO) {
+    public List<Maintenance> maintenanceVerification(int id) {
         List<Maintenance> maintenance = maintenanceDAO.findById(id);
         if (maintenance == null || maintenance.isEmpty()) {
             throw new MaintenanceNotFind();
@@ -138,5 +152,73 @@ public class MaintenanceService {
         return list.getFirst();
     }
 
+    /**
+     *
+     * @param informations
+     * @return
+     */
+    public Map<String, Object> addMaintenanceService(RequiredMaintenance informations) {
+        VehicleDTO vehicleDTO = this.vehicleVerification(informations.getId_vehicle());
+        UnavailabilityDTO unavailability = this.unavailabilityVerification(informations.getId_unavailability());
+        this.requestReservation(informations.getId_vehicle());
+        if (this.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
+            Map<String, Object> response = new HashMap<>();
+            Maintenance maintenance = new Maintenance();
+            maintenance.setidVehicle(vehicleDTO.getId());
+            maintenance.setIdUnavailability(unavailability.getId());
+            maintenanceDAO.save(maintenance);
+            response.put("success", true);
+            response.put("message", "Votre maintenance a été ajouté !");
+            return response;
+        } else {
+            throw new VehicleType();
+        }
+    }
+
+    /**
+     *
+     * @param idMaintenance
+     * @param maintenanceRequest
+     * @return
+     */
+    public Map<String, Object> editMaintenanceService(int idMaintenance, Maintenance maintenanceRequest) {
+        try {
+            List<Maintenance> maintenance = this.maintenanceVerification(idMaintenance);
+            VehicleDTO vehicle = this.vehicleVerification(maintenanceRequest.getidVehicle());
+            UnavailabilityDTO unavailability = this.unavailabilityVerification(maintenanceRequest.getIdUnavailability());
+            if (!this.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicle.getType())) {
+                throw new VehicleType();
+            } else {
+                this.editMaintenance(maintenance.getFirst(), maintenanceRequest);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "Votre maintenance a été modifié !");
+                return response;
+            }
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+    }
+
+    public Map<String, Object> deleteMaintenanceService(int idMaintenance) {
+        List<Maintenance> maintenances = maintenanceDAO.findById(idMaintenance);
+        if (maintenances == null || maintenances.isEmpty()) {
+            throw new MaintenanceNotFind();
+        } else {
+            maintenanceDAO.delete(maintenances.getFirst());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Votre maintenance a été supprimé !");
+            return response;
+        }
+    }
+
+    public List<Maintenance> maintenancesWithVehicle(int idVehicle) {
+        try {
+            return maintenanceDAO.findByIdVehicle(idVehicle);
+        } catch (Exception e) {
+            throw new MaintenanceNotFind();
+        }
+    }
 
 }

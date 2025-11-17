@@ -49,11 +49,7 @@ public class WebAppController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Maintenance.class)))})
     @RequestMapping(path = "/maintenance/{id}", method = RequestMethod.GET)
     public List<Maintenance> getMaintenance(@Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int id) {
-        try {
-            return maintenanceDao.findById(id);
-        } catch (Exception e) {
-            throw new MaintenanceNotFind();
-        }
+        return maintenanceService.oneMaintenance(id);
     }
 
     @Operation(summary = "Crée une nouvelle maintenance dans la base de données", description = "Requête pour crée/ajouter une maintenance dans la base de données")
@@ -120,21 +116,7 @@ public class WebAppController {
             )})
     @RequestMapping(value = "/maintenance", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> addMaintenance(@Validated @RequestBody RequiredMaintenance informations) {
-        VehicleDTO vehicleDTO = maintenanceService.vehicleVerification(informations.getId_vehicle());
-        UnavailabilityDTO unavailability = maintenanceService.unavailabilityVerification(informations.getId_unavailability());
-        maintenanceService.requestReservation(informations.getId_vehicle());
-        if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
-            Map<String, Object> response = new HashMap<>();
-            Maintenance maintenance = new Maintenance();
-            maintenance.setidVehicle(vehicleDTO.getId());
-            maintenance.setIdUnavailability(unavailability.getId());
-            maintenanceDao.save(maintenance);
-            response.put("success", true);
-            response.put("message", "Votre maintenance a été ajouté !");
-            return ResponseEntity.ok(response);
-        } else {
-            throw new VehicleType();
-        }
+        return ResponseEntity.ok(maintenanceService.addMaintenanceService(informations));
     }
 
 
@@ -145,22 +127,7 @@ public class WebAppController {
     public ResponseEntity<Map<String, Object>> editMaintenance(
             @Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance,
             @Validated @RequestBody Maintenance maintenanceRequest) {
-        try {
-            List<Maintenance> maintenance = maintenanceService.maintenanceVerification(idMaintenance, maintenanceDao);
-            VehicleDTO vehicle = maintenanceService.vehicleVerification(maintenanceRequest.getidVehicle());
-            UnavailabilityDTO unavailability = maintenanceService.unavailabilityVerification(maintenanceRequest.getIdUnavailability());
-            if (!maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicle.getType())) {
-                throw new VehicleType();
-            } else {
-                maintenanceService.editMaintenance(maintenance.getFirst(), maintenanceRequest, maintenanceDao);
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "Votre maintenance a été modifié !");
-                return ResponseEntity.ok(response);
-            }
-        } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
-        }
+        return ResponseEntity.ok(maintenanceService.editMaintenanceService(idMaintenance, maintenanceRequest));
     }
 
     @Operation(summary = "Supprimer une maintenance de la base de données", description = "Requête pour supprimer une maintenance de la base de données")
@@ -168,16 +135,7 @@ public class WebAppController {
     @DeleteMapping("/maintenance/{id}")
     public ResponseEntity<Map<String, Object>> deleteMaintenance(
             @Parameter(description = "Identifiant de la maintenance", required = true) @PathVariable(value = "id") int idMaintenance) {
-        List<Maintenance> maintenances = maintenanceDao.findById(idMaintenance);
-        if (maintenances == null || maintenances.isEmpty()) {
-            throw new MaintenanceNotFind();
-        } else {
-            maintenanceDao.delete(maintenances.getFirst());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Votre maintenance a été supprimé !");
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(maintenanceService.deleteMaintenanceService(idMaintenance));
     }
 
 
@@ -185,11 +143,7 @@ public class WebAppController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Opération réussi", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Maintenance.class))), @ApiResponse(responseCode = "405", description = "Échec de l'opération ", content = @Content(mediaType = "application/json", examples = {@ExampleObject(name = "Erreur générale", value = "{\n" + "  \"localDateTime\": \"2025-11-03T08:25:00\",\n" + "  \"message\": \"Maintenance not found with ID : 1 \",\n" + "  \"status\": 404\n" + "}")}))})
     @RequestMapping(path = "/maintenance/vehicle/{id}", method = RequestMethod.GET)
     public List<Maintenance> getMaintenanceVehicleId(@Parameter(description = "Identifiant du vehicule", required = true) @PathVariable(value = "id") int idVehicle) {
-        try {
-            return maintenanceDao.findByIdVehicle(idVehicle);
-        } catch (Exception e) {
-            throw new MaintenanceNotFind();
-        }
+        return maintenanceService.maintenancesWithVehicle(idVehicle);
     }
 }
 
