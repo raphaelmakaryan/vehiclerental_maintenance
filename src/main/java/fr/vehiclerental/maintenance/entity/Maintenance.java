@@ -12,13 +12,13 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Entity
 @Table(name = "Maintenance")
-public class  Maintenance {
+public class Maintenance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "id_vehicule")
-    private int idVehicule;
+    @Column(name = "id_vehicle")
+    private int idVehicle;
 
     @Column(name = "id_unavailabilty")
     private int idUnavailability;
@@ -35,12 +35,12 @@ public class  Maintenance {
         this.idUnavailability = idUnavailability;
     }
 
-    public int getIdVehicule() {
-        return idVehicule;
+    public int getidVehicle() {
+        return idVehicle;
     }
 
-    public void setIdVehicule(int idVehicule) {
-        this.idVehicule = idVehicule;
+    public void setidVehicle(int idVehicle) {
+        this.idVehicle = idVehicle;
     }
 
     public Integer getId() {
@@ -55,7 +55,7 @@ public class  Maintenance {
     public String toString() {
         return "Maintenance{" +
                 "id=" + id +
-                ", idVehicule=" + idVehicule +
+                ", idVehicle=" + idVehicle +
                 ", idUnavailability=" + idUnavailability +
                 '}';
     }

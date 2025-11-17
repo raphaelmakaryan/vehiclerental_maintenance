@@ -126,7 +126,7 @@ public class WebAppController {
         if (maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicleDTO.getType())) {
             Map<String, Object> response = new HashMap<>();
             Maintenance maintenance = new Maintenance();
-            maintenance.setIdVehicule(vehicleDTO.getId());
+            maintenance.setidVehicle(vehicleDTO.getId());
             maintenance.setIdUnavailability(unavailability.getId());
             maintenanceDao.save(maintenance);
             response.put("success", true);
@@ -147,7 +147,7 @@ public class WebAppController {
             @Validated @RequestBody Maintenance maintenanceRequest) {
         try {
             List<Maintenance> maintenance = maintenanceService.maintenanceVerification(idMaintenance, maintenanceDao);
-            VehicleDTO vehicle = maintenanceService.vehicleVerification(maintenanceRequest.getIdVehicule());
+            VehicleDTO vehicle = maintenanceService.vehicleVerification(maintenanceRequest.getidVehicle());
             UnavailabilityDTO unavailability = maintenanceService.unavailabilityVerification(maintenanceRequest.getIdUnavailability());
             if (!maintenanceService.typeVerificationUnavaibility(unavailability.getTypeVehicle(), vehicle.getType())) {
                 throw new VehicleType();

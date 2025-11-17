@@ -90,7 +90,7 @@ public class MaintenanceService {
      * @param maintenanceDAO         DAO de maintenance
      */
     public void editMaintenance(Maintenance findindMaintenance, Maintenance maintenanceBodyRequest, MaintenanceDAO maintenanceDAO) {
-        findindMaintenance.setIdVehicule(maintenanceBodyRequest.getIdVehicule());
+        findindMaintenance.setidVehicle(maintenanceBodyRequest.getidVehicle());
         findindMaintenance.setIdUnavailability(maintenanceBodyRequest.getIdUnavailability());
         maintenanceDAO.save(findindMaintenance);
     }
