@@ -1,0 +1,34 @@
+stages:
+  - clean
+  - jar
+  - docker-build-and-push
+
+clean:
+  stage: clean
+  image: maven:amazoncorretto
+  script:
+    - echo "Nettoyage en cours"
+    - mvn clean package -DskipTests
+    - echo "Nettoyage terminé"
+  artifacts:
+    paths:
+      - .
+
+docker-build-and-push:
+  stage: docker-build-and-push
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: [ "--tls=false" ]
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    GIT_STRATEGY: none
+  script:
+    - echo "$CI_REGISTRY_PAT" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - echo "Build en cours"
+    - docker build -t "sarahpop/vehiclerental_entretien:latest" .
+    - echo "Build terminé"
+    - echo "push en cours"
+    - docker push "sarahpop/vehiclerental_entretien:latest"
+    - echo "push terminé"
+
